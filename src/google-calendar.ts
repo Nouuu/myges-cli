@@ -2,7 +2,7 @@ import { Credentials as GoogleToken, OAuth2Client } from 'google-auth-library';
 import { calendar_v3, google } from 'googleapis';
 import { AgendaItem } from './interfaces/agenda.interface';
 import { formatRFC3339 } from 'date-fns';
-import cliProgress from 'cli-progress';
+import cliProgress, { SingleBar } from 'cli-progress';
 import colors from 'colors';
 import { getCampusLocation } from './campus-location';
 import { Config } from './config';
@@ -26,12 +26,9 @@ const multiBar = new cliProgress.MultiBar({
   barIncompleteChar: '\u2591',
   hideCursor: true,
 });
-let eventAdded = true;
-let eventRemoved = true;
-const taskComplete = () => {
-  if (eventAdded && eventRemoved) {
-    multiBar.stop();
-  }
+const taskComplete = (bar: SingleBar) => {
+  console.group(multiBar);
+  multiBar.remove(bar);
 };
 
 export function readEvents(
@@ -107,7 +104,6 @@ function addEvents(
     auth,
     http2: true,
   });
-  eventAdded = false;
   const progressBar = multiBar.create(events.length, 0, {
     task: 'Adding new events  ',
   });
@@ -136,9 +132,7 @@ function addEvents(
     ),
   );
   Promise.all(tasks).finally(() => {
-    // progressBar.stop();
-    eventAdded = true;
-    taskComplete();
+    taskComplete(progressBar);
   });
 }
 
@@ -165,7 +159,6 @@ function deleteEvents(
   if (errP) return console.error('The API returned an error: ' + errP);
   const events = resP.data.items;
   if (events.length) {
-    eventRemoved = false;
     const progressBar = multiBar.create(events.length, 0, {
       task: 'Removing old events',
     });
@@ -194,9 +187,7 @@ function deleteEvents(
     );
 
     Promise.all(tasks).finally(() => {
-      // progressBar.stop();
-      eventRemoved = true;
-      taskComplete();
+      taskComplete(progressBar);
     });
   } else {
     console.log('No events to delete found.');
