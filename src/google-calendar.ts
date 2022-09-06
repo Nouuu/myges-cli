@@ -132,7 +132,7 @@ function addEvents(
             },
           );
         }),
-      500 * (i + 1),
+      1000 * (i + 1),
     ),
   );
   Promise.all(tasks).finally(() => {
@@ -189,7 +189,7 @@ function deleteEvents(
                 }
               },
             );
-          }, 500 * (i + 1));
+          }, 1000 * (i + 1));
         }),
     );
 
